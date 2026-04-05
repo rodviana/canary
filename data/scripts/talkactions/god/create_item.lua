@@ -5,11 +5,20 @@ function createItem.onSay(player, words, param)
 	logCommand(player, words, param)
 
 	local split = param:split(",")
+	local paramId = tonumber(split[1])
 
-	local itemType = ItemType(split[1])
-	if itemType:getId() == 0 then
-		itemType = ItemType(tonumber(split[1]))
-		if not tonumber(split[1]) or itemType:getId() == 0 then
+	local itemType
+	if paramId then
+		itemType = ItemType(paramId)
+		if itemType:getId() ~= paramId then
+			player:sendCancelMessage(
+				"There is no item with id " .. paramId .. ". Check data/items/items.xml, restart the server, and use a build where custom ids with a name load without appearances.dat."
+			)
+			return true
+		end
+	else
+		itemType = ItemType(split[1])
+		if itemType:getId() == 0 then
 			player:sendCancelMessage("There is no item with that id or name.")
 			return true
 		end

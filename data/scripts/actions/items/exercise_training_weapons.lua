@@ -1,4 +1,5 @@
 local exhaustionTime = 10
+local infiniteExerciseChargeKey = "exerciseInfiniteCharges"
 
 local exerciseWeaponsTable = {
 	-- MELE
@@ -115,14 +116,17 @@ local function exerciseTrainingEvent(playerId, tilePosition, weaponId, dummyId)
 		player:addSkillTries(exerciseWeaponsTable[weaponId].skill, 7 * rate)
 	end
 
-	weapon:setAttribute(ITEM_ATTRIBUTE_CHARGES, (weaponCharges - 1))
+	local hasInfiniteCharges = weapon:getCustomAttribute(infiniteExerciseChargeKey) == 1
+	if not hasInfiniteCharges then
+		weapon:setAttribute(ITEM_ATTRIBUTE_CHARGES, (weaponCharges - 1))
+	end
 	tilePosition:sendMagicEffect(CONST_ME_HITAREA)
 
 	if exerciseWeaponsTable[weaponId].effect then
 		playerPosition:sendDistanceEffect(tilePosition, exerciseWeaponsTable[weaponId].effect)
 	end
 
-	if weapon:getAttribute(ITEM_ATTRIBUTE_CHARGES) <= 0 then
+	if not hasInfiniteCharges and weapon:getAttribute(ITEM_ATTRIBUTE_CHARGES) <= 0 then
 		weapon:remove(1)
 		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Your training weapon has disappeared.")
 		leaveExerciseTraining(playerId, targetItem)

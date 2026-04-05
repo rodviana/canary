@@ -312,9 +312,13 @@ void Items::parseItemNode(const pugi::xml_node &itemNode, uint16_t id) {
 		items.resize(id + 1);
 	}
 	ItemType &itemType = getItemType(id);
-	// Ids 0-100 are used for fluids in the XML
-	if (id >= 100 && (itemType.id == 0 && (itemType.name.empty() || itemType.name == asLowerCaseString("reserved sprite")))) {
-		return;
+	// Ids 0-100 are used for fluids in the XML. Skip undefined client ids unless items.xml names the item
+	// (allows custom items before they exist in appearances.pb / client assets).
+	const std::string xmlItemName = itemNode.attribute("name").as_string();
+	if (id >= 100 && itemType.id == 0 && (itemType.name.empty() || itemType.name == asLowerCaseString("reserved sprite"))) {
+		if (xmlItemName.empty()) {
+			return;
+		}
 	}
 	itemType.id = id;
 
