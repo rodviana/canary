@@ -58,7 +58,7 @@ return {
 		},
 		{
 			icons = { "Gold_Pouch.png" },
-			name = "Gold Pouch",
+			name = "Backpack of Infinity",
 			price = 900,
 			itemtype = 23721,
 			count = 1,

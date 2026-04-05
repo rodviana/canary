@@ -135,7 +135,7 @@ void ItemParse::parseDescription(const std::string &stringValue, pugi::xml_attri
 		if (g_configManager().getBoolean(TOGGLE_GOLD_POUCH_QUICKLOOT_ONLY) && itemType.id == ITEM_GOLD_POUCH) {
 			auto pouchLimit = g_configManager().getNumber(LOOTPOUCH_MAXLIMIT);
 			itemType.description = fmt::format("A bag with {} slots where you can hold your loots.", pouchLimit);
-			itemType.name = "loot pouch";
+			itemType.name = "Backpack of Infinity";
 		}
 	}
 }
