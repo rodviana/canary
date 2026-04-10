@@ -874,6 +874,11 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg) {
 
 	std::string characterName = msg.getString();
 
+	g_logger().info(
+		"[ProtocolGame::onRecvFirstMessage] Game login request from remote IP '{}': account='{}', character='{}', clientVersion='{}', oldProtocol={}, authType='{}'.",
+		convertIPToString(getIP()), accountDescriptor, characterName, clientVersion, oldProtocol, authType
+	);
+
 	const auto &onlinePlayer = g_game().getPlayerByName(characterName);
 	const auto &foundPlayer = !onlinePlayer ? g_game().getDeadPlayer(characterName) : onlinePlayer;
 	if (foundPlayer && foundPlayer->client) {
@@ -893,6 +898,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg) {
 	auto timeStamp = msg.get<uint32_t>();
 	uint8_t randNumber = msg.getByte();
 	if (challengeTimestamp != timeStamp || challengeRandom != randNumber) {
+		g_logger().warn(
+			"[ProtocolGame::onRecvFirstMessage] Challenge mismatch for character '{}' from remote IP '{}'. Expected timestamp/random '{}/{}', received '{}/{}'.",
+			characterName, convertIPToString(getIP()), challengeTimestamp, challengeRandom, timeStamp, randNumber
+		);
 		disconnect();
 		return;
 	}
@@ -904,6 +913,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg) {
 	}
 
 	if (!oldProtocol && clientVersion != CLIENT_VERSION) {
+		g_logger().warn(
+			"[ProtocolGame::onRecvFirstMessage] Protocol mismatch for character '{}' from remote IP '{}'. Client sent '{}', server expects '{}'.",
+			characterName, convertIPToString(getIP()), clientVersion, CLIENT_VERSION
+		);
 		ss.str(std::string());
 		ss << "Only clients with protocol " << CLIENT_VERSION_UPPER << "." << CLIENT_VERSION_LOWER;
 		if (g_configManager().getBoolean(OLD_PROTOCOL)) {
@@ -939,6 +952,10 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg) {
 
 	uint32_t accountId;
 	if (!IOLoginData::gameWorldAuthentication(accountDescriptor, password, characterName, accountId, oldProtocol, getIP())) {
+		g_logger().warn(
+			"[ProtocolGame::onRecvFirstMessage] Game world authentication failed for account '{}' / character '{}' from remote IP '{}'. authType='{}'.",
+			accountDescriptor, characterName, convertIPToString(getIP()), authType
+		);
 		ss.str(std::string());
 		if (authType == "session") {
 			ss << "Your session has expired. Please log in again.";
@@ -955,6 +972,11 @@ void ProtocolGame::onRecvFirstMessage(NetworkMessage &msg) {
 		);
 		return;
 	}
+
+	g_logger().info(
+		"[ProtocolGame::onRecvFirstMessage] Game world authentication succeeded for account '{}' / character '{}' (accountId {}) from remote IP '{}'.",
+		accountDescriptor, characterName, accountId, convertIPToString(getIP())
+	);
 
 	g_dispatcher().addEvent([self = getThis(), characterName, accountId, operatingSystem] { self->login(characterName, accountId, operatingSystem); }, __FUNCTION__);
 }
@@ -988,6 +1010,12 @@ void ProtocolGame::sendLoginChallenge() {
 }
 
 void ProtocolGame::disconnectClient(const std::string &message) const {
+	const auto playerName = player ? player->getName() : std::string("<no-player>");
+	g_logger().warn(
+		"[ProtocolGame::disconnectClient] Character '{}' from remote IP '{}' disconnected: {}",
+		playerName, convertIPToString(getIP()), message
+	);
+
 	auto output = OutputMessagePool::getOutputMessage();
 	output->addByte(0x14);
 	output->addString(message);

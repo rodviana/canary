@@ -18,8 +18,11 @@
 #include "game/game.hpp"
 #include "core.hpp"
 #include "enums/account_errors.hpp"
+#include "utils/tools.hpp"
 
 void ProtocolLogin::disconnectClient(const std::string &message) const {
+	g_logger().warn("[ProtocolLogin::disconnectClient] Remote IP '{}' disconnected: {}", convertIPToString(getIP()), message);
+
 	const auto output = OutputMessagePool::getOutputMessage();
 
 	output->addByte(0x0B);
@@ -36,12 +39,13 @@ void ProtocolLogin::getCharacterList(const std::string &accountDescriptor, const
 	if (oldProtocol && !g_configManager().getBoolean(OLD_PROTOCOL)) {
 		disconnectClient(fmt::format("Only protocol version {}.{} is allowed.", CLIENT_VERSION_UPPER, CLIENT_VERSION_LOWER));
 		return;
-	} else if (!oldProtocol) {
-		disconnectClient(fmt::format("Only protocol version {}.{} or outdated 11.00 is allowed.", CLIENT_VERSION_UPPER, CLIENT_VERSION_LOWER));
-		return;
 	}
 
 	if (account.load() != AccountErrors_t::Ok || !account.authenticate(password)) {
+		g_logger().warn(
+			"[ProtocolLogin::getCharacterList] Login rejected for account '{}' from remote IP '{}'.",
+			accountDescriptor, convertIPToString(getIP())
+		);
 		std::ostringstream ss;
 		ss << (oldProtocol ? "Username" : "Email") << " or password is not correct.";
 		disconnectClient(ss.str());
@@ -89,6 +93,16 @@ void ProtocolLogin::getCharacterList(const std::string &accountDescriptor, const
 		output->addString(name);
 	}
 
+	g_logger().info(
+		"[ProtocolLogin::getCharacterList] Login accepted for account '{}' (id {}) from remote IP '{}'. "
+		"Advertising world '{}' at '{}:{}' with {} character(s).",
+		accountDescriptor, account.getID(), convertIPToString(getIP()),
+		g_configManager().getString(SERVER_NAME),
+		g_configManager().getString(IP),
+		g_configManager().getNumber(GAME_PORT),
+		size
+	);
+
 	// Get premium days, check is premium and get lastday
 	output->addByte(account.getPremiumRemainingDays());
 	output->addByte(account.getPremiumLastDay() > getTimeNow());
@@ -111,6 +125,11 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage &msg) {
 
 	// Old protocol support
 	oldProtocol = version == 1100;
+
+	if (!oldProtocol && version != CLIENT_VERSION) {
+		disconnectClient(fmt::format("Only protocol version {}.{} or outdated 11.00 is allowed.", CLIENT_VERSION_UPPER, CLIENT_VERSION_LOWER));
+		return;
+	}
 
 	msg.skipBytes(17);
 	/*
@@ -173,6 +192,11 @@ void ProtocolLogin::onRecvFirstMessage(NetworkMessage &msg) {
 		disconnectClient("Invalid password.");
 		return;
 	}
+
+	g_logger().info(
+		"[ProtocolLogin::onRecvFirstMessage] Login request from remote IP '{}': account='{}', protocol='{}', oldProtocol={}.",
+		convertIPToString(getIP()), accountDescriptor, version, oldProtocol
+	);
 
 	g_dispatcher().addEvent(
 		[self = std::static_pointer_cast<ProtocolLogin>(shared_from_this()), accountDescriptor, password] {
