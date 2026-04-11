@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Build context = checkout do submódulo canary (../canary desde infra/).
+# Build context = checkout do submódulo canary (../canary desde infra/). Branch padrão: rodrigo (repo pai .gitmodules).
 
 # Stage 1: Download all dependencies
 FROM ubuntu:24.04 AS dependencies
@@ -90,6 +90,8 @@ RUN export VCPKG_MANIFEST_INSTALL=OFF && export VCPKG_INSTALLED_DIR=/srv/build/v
 
 # Stage 3: execute
 FROM ubuntu:24.04 AS prod
+ARG CANARY_GIT_BRANCH=rodrigo
+LABEL canary.stack.git.branch="${CANARY_GIT_BRANCH}"
 COPY --from=build /srv/build/build/linux-release/bin/canary /bin/canary
 WORKDIR /srv/canary
 ENTRYPOINT ["/srv/canary/start.sh", "canary"]

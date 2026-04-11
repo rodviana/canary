@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Build context = checkout do submódulo canary (../canary desde infra/).
+# Build context = checkout do submódulo canary (../canary desde infra/). Branch padrão: rodrigo (repo pai .gitmodules).
 
 # Stage 1: Download all dependencies
 FROM ubuntu:24.04 AS dependencies
@@ -91,8 +91,10 @@ RUN export VCPKG_ROOT=/opt/vcpkg/ && \
 # Stage 3: load data and execute
 FROM ubuntu:24.04
 ARG DEBIAN_FRONTEND=noninteractive
+ARG CANARY_GIT_BRANCH=rodrigo
 ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
 ENV TZ=Etc/UTC
+LABEL canary.stack.git.branch="${CANARY_GIT_BRANCH}"
 
 VOLUME [ "/data" ]
 

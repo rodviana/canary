@@ -25,6 +25,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.dev
       target: prod
+      args:
+        CANARY_GIT_BRANCH: ${CANARY_GIT_BRANCH:-rodrigo}
     restart: unless-stopped
     env_file:
       - '.env'
