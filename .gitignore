@@ -372,6 +372,8 @@ tasks.json
 ## CUSTOM
 # Files
 
+# Game world map (binary; often fetched at runtime via config.lua toggleDownloadMap / Docker start.sh)
+**/world/*.otbm
 
 # Extensions
 *.ini

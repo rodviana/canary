@@ -1,3 +1,10 @@
+--[[
+  Fun / fast server preset (fork of config.lua.dist).
+  XP 10x, spawn 2x, bestiary & bosstiary progress faster, PvP kills grant XP,
+  party share XP ~10x wider level spread, gold pouch accepts any item, Killing in the Name Of 5x points,
+  prey & hunting tasks: free 3rd slots, cheaper rolls, shorter waits, longer prey bonus.
+  Usage: cp config.lua.fun-server config.lua   (adjust mysql* below first)
+]]
 -- Core settings
 -- Note: If you want to use datapack folder canary (custom), put only "data-canary"
 -- If you want to use the global datapack folder, put "data-otservbr-global"
@@ -41,7 +48,7 @@ timeToDecreaseFrags = 24 * 60 * 60 * 1000
 whiteSkullTime = 15 * 60 * 1000
 stairJumpExhaustion = 2 * 1000
 experienceByKillingPlayers = true
-expFromPlayersLevelRange = 75
+expFromPlayersLevelRange = 200 -- wider level gap still awards PvP kill XP (see getGainedExperience)
 dayKillsToRedSkull = 3
 weekKillsToRedSkull = 5
 monthKillsToRedSkull = 10
@@ -64,8 +71,8 @@ loginProtocolPort = 7171
 gameProtocolPort = 7172
 statusProtocolPort = 7171
 maxPlayers = 0
-serverName = "OTServBR-Global"
-serverMotd = "Welcome to the OTServBR-Global!"
+serverName = "OTServBR-Fun"
+serverMotd = "Fun server: 10x XP, 2x spawn, easier bestiary/bosstiary, PvP XP on."
 statusTimeout = 5 * 1000
 replaceKickOnLogin = true
 maxPacketsPerSecond = 25
@@ -191,12 +198,12 @@ transcendenceAvatarDuration = 7000
 -- Bestiary & Bosstiary system
 -- NOTE: bestiaryKillMultiplier, multiplier value of monster killed, default 1
 -- NOTE: bosstiaryKillMultiplier, multiplier value of boss killed, default 1
-bestiaryKillMultiplier = 1
-bosstiaryKillMultiplier = 1
-bestiaryRateCharmShopPrice  = 1.0
+bestiaryKillMultiplier = 3
+bosstiaryKillMultiplier = 3
+bestiaryRateCharmShopPrice = 1.0
 boostedBossSlot = true
 boostedBossLootBonus = 250
-boostedBossKillBonus = 3
+boostedBossKillBonus = 5
 
 -- Hazard system
 toogleHazardSystem = true
@@ -252,7 +259,7 @@ wheelAtelierRevealGreaterCost = 6000000
 familiarTime = 30
 
 partyAutoShareExperience = true
--- partyShareRangeMultiplier: higher = party shared XP with larger level gaps (default 1.5)
+-- partyShareRangeMultiplier: higher = party shared XP allowed with larger level gaps (default 1.5; ~10x here)
 partyShareRangeMultiplier = 15
 partyShareLootBoosts = false
 partyShareLootBoostsDimishingFactor = 0.7
@@ -515,7 +522,7 @@ rateExp = 10
 rateSkill = 10
 rateLoot = 10
 rateMagic = 10
-rateSpawn = 2
+rateSpawn = 2 -- double spawn density vs 1x
 
 -- Killing in the name of Quest
 rateKillingInTheNameOfPoints = 5

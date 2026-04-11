@@ -120,24 +120,24 @@ augmentStrongImpactPercent = 10
 -- NOTE: preyBonusTime: Time in seconds that players will have of prey bonus.
 -- NOTE: preyFreeRerollTime: Time in seconds that players will have to wait to get a new free prey list.
 preySystemEnabled = true
-preyFreeThirdSlot = true
-preyRerollPricePerLevel = 40
-preySelectListPrice = 1
+preyFreeThirdSlot = false
+preyRerollPricePerLevel = 200
+preySelectListPrice = 5
 preyBonusRerollPrice = 1
-preyBonusTime = 6 * 60 * 60
-preyFreeRerollTime = 6 * 60 * 60
+preyBonusTime = 2 * 60 * 60
+preyFreeRerollTime = 20 * 60 * 60
 
 -- Task hunting system
 -- NOTE: taskHuntingLimitedTasksExhaust: Time to wait to select a new creature on the task hunting slot after claiming the reward.
 -- NOTE: taskHuntingRerollPricePerLevel: Price multiplier in gold coin for rerolling task hunting list.
 -- NOTE: taskHuntingFreeRerollTime: Time in seconds that players will have to wait to get a new free task hunting list.
 taskHuntingSystemEnabled = true
-taskHuntingFreeThirdSlot = true
-taskHuntingLimitedTasksExhaust = 2 * 60 * 60
-taskHuntingRerollPricePerLevel = 40
-taskHuntingSelectListPrice = 1
+taskHuntingFreeThirdSlot = false
+taskHuntingLimitedTasksExhaust = 20 * 60 * 60
+taskHuntingRerollPricePerLevel = 200
+taskHuntingSelectListPrice = 5
 taskHuntingBonusRerollPrice = 1
-taskHuntingFreeRerollTime = 6 * 60 * 60
+taskHuntingFreeRerollTime = 20 * 60 * 60
 
 -- Forge system
 -- NOTE: forgeAmountMultiplier, amount dusts multiplies of influenced monsters, default 3
@@ -252,8 +252,8 @@ wheelAtelierRevealGreaterCost = 6000000
 familiarTime = 30
 
 partyAutoShareExperience = true
--- partyShareRangeMultiplier: higher = party shared XP with larger level gaps (default 1.5)
-partyShareRangeMultiplier = 15
+-- partyShareRangeMultiplier: the range of the party share experience, default 3/2 (1.5)
+partyShareRangeMultiplier = 1.5
 partyShareLootBoosts = false
 partyShareLootBoostsDimishingFactor = 0.7
 
@@ -285,7 +285,7 @@ onlyPremiumAccount = false
 depotChest = 4
 autoLoot = true
 autoBank = true
-toggleGoldPouchAllowAnything = true
+toggleGoldPouchAllowAnything = false
 toggleGoldPouchQuickLootOnly = false
 toggleServerIsRetroPVP = false
 toggleTravelsFree = false
@@ -518,7 +518,7 @@ rateMagic = 10
 rateSpawn = 2
 
 -- Killing in the name of Quest
-rateKillingInTheNameOfPoints = 5
+rateKillingInTheNameOfPoints = 1
 
 -- Today regeneration condition over an loop every 1 second,
 -- So values which should regenerated less then 1 second or won't will work
