@@ -14,6 +14,13 @@
 #include "game/game.hpp"
 #include "map/spectators.hpp"
 
+namespace {
+[[nodiscard]] bool isInfinityBackpackId(const uint16_t containerId) {
+	const auto infinityBackpackItemId = g_configManager().getNumber(INFINITY_BACKPACK_ITEM_ID);
+	return infinityBackpackItemId > 0 && containerId == static_cast<uint16_t>(infinityBackpackItemId);
+}
+} // namespace
+
 Container::Container(uint16_t type) :
 	Container(type, items[type].maxItems) {
 	m_maxItems = static_cast<uint32_t>(g_configManager().getNumber(MAX_CONTAINER_ITEM));
@@ -29,8 +36,7 @@ Container::Container(uint16_t type) :
 		maxSize = 32;
 	}
 
-	if (const auto infinityBackpackItemId = g_configManager().getNumber(INFINITY_BACKPACK_ITEM_ID);
-	    infinityBackpackItemId > 0 && getID() == static_cast<uint16_t>(infinityBackpackItemId)) {
+	if (isInfinityBackpackId(getID())) {
 		pagination = true;
 		const auto cap = g_configManager().getNumber(INFINITY_BACKPACK_MAX_ITEMS);
 		m_maxItems = cap > 0 ? static_cast<uint32_t>(cap) : 100000U;
@@ -236,13 +242,23 @@ bool Container::countsToLootAnalyzerBalance() const {
 
 void Container::updateItemWeight(int32_t diff) {
 	totalWeight += diff;
+	// Contents of the infinity backpack must not propagate to parent containers (capacity bypass).
+	if (isInfinityBackpackId(getID())) {
+		return;
+	}
 	std::shared_ptr<Container> parentContainer = getContainer();
 	while ((parentContainer = parentContainer->getParentContainer()) != nullptr) {
 		parentContainer->totalWeight += diff;
+		if (isInfinityBackpackId(parentContainer->getID())) {
+			break;
+		}
 	}
 }
 
 uint32_t Container::getWeight() const {
+	if (isInfinityBackpackId(getID())) {
+		return Item::getWeight();
+	}
 	return Item::getWeight() + totalWeight;
 }
 
