@@ -283,8 +283,8 @@ onlyPremiumAccount = false
 -- NOTE: minTownIdToBankTransferFromMain blocks towns less than defined from receiving money transfers
 -- NOTE: enableSupportOutfit enable GODS and GMS to select support outfit (gamemaster, customer support or community manager)
 depotChest = 4
-autoLoot = false
-autoBank = false
+autoLoot = true
+autoBank = true
 toggleGoldPouchAllowAnything = false
 toggleGoldPouchQuickLootOnly = false
 toggleServerIsRetroPVP = false
@@ -296,6 +296,10 @@ toggleReceiveReward = false
 randomMonsterSpawn = false
 lootPouchMaxLimit = 2000
 storeInboxMaxLimit = 2000
+-- Server item id that gets huge paginated capacity (any pickupable item). Default 2854 = all normal backpacks.
+-- Set to a dedicated custom item id in data/items/items.xml if you only want the starter bag to be special.
+infinityBackpackItemId = 2854
+infinityBackpackMaxItems = 100000
 enablePlayerPutItemInAmmoSlot = false
 startStreakLevel = 0
 showLootsInBestiary = false
@@ -507,11 +511,11 @@ sortLootByChance = false
 -- lowLevelBonusExp works up to level 50
 rateUseStages = false
 lowLevelBonusExp = 50
-rateExp = 1
-rateSkill = 1
-rateLoot = 1
-rateMagic = 1
-rateSpawn = 1
+rateExp = 10
+rateSkill = 10
+rateLoot = 10
+rateMagic = 10
+rateSpawn = 2
 
 -- Killing in the name of Quest
 rateKillingInTheNameOfPoints = 1
@@ -528,7 +532,7 @@ rateSoulRegenSpeed = 1.0
 rateSpellCooldown = 1.0
 rateAttackSpeed = 1.0
 rateOfflineTrainingSpeed = rateAttackSpeed
-rateExerciseTrainingSpeed = rateAttackSpeed
+rateExerciseTrainingSpeed = rateAttackSpeed * 5
 
 -- Monster rates
 rateMonsterHealth = 1.0

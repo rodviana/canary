@@ -115,7 +115,12 @@ function sendFirstItems.onLogin(player)
 		end
 	end
 
-	local backpack = player:addItem(2854)
+	local backpackId = configManager.getNumber(configKeys.INFINITY_BACKPACK_ITEM_ID)
+	if backpackId <= 0 then
+		backpackId = 2854
+	end
+
+	local backpack = player:addItem(backpackId)
 	if not backpack then
 		return true
 	end
@@ -125,6 +130,8 @@ function sendFirstItems.onLogin(player)
 			backpack:addItem(targetVocation.container[i][1], targetVocation.container[i][2])
 		end
 	end
+
+	player:addTibiaCoins(10000)
 	return true
 end
 

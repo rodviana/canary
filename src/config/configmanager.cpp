@@ -269,6 +269,8 @@ bool ConfigManager::load() {
 	loadIntConfig(L, HOUSE_BUY_LEVEL, "houseBuyLevel", 0);
 	loadIntConfig(L, HOUSE_LOSE_AFTER_INACTIVITY, "houseLoseAfterInactivity", 0);
 	loadIntConfig(L, HOUSE_PRICE_PER_SQM, "housePriceEachSQM", 1000);
+	loadIntConfig(L, INFINITY_BACKPACK_ITEM_ID, "infinityBackpackItemId", 2854);
+	loadIntConfig(L, INFINITY_BACKPACK_MAX_ITEMS, "infinityBackpackMaxItems", 100000);
 	loadIntConfig(L, KICK_AFTER_MINUTES, "kickIdlePlayerAfterMinutes", 15);
 	loadIntConfig(L, LOOTPOUCH_MAXLIMIT, "lootPouchMaxLimit", 2000);
 	loadIntConfig(L, LOW_LEVEL_BONUS_EXP, "lowLevelBonusExp", 50);

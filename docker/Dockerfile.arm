@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1.7
+# Build context = checkout do submódulo canary (../canary desde infra/).
 
 # Stage 1: Download all dependencies
 FROM ubuntu:24.04 AS dependencies
@@ -41,35 +42,40 @@ RUN --mount=type=secret,id=github_token \
 	--mount=type=cache,target=/opt/vcpkg/packages \
 	--mount=type=cache,target=/root/.cache/vcpkg \
 	/bin/bash -euo pipefail -c '\
-		if [ ! -s /run/secrets/github_token ]; then \
-			echo "Missing /run/secrets/github_token" >&2; \
-			exit 1; \
-		fi; \
-		NUGET_AUTH_TOKEN=$(cat /run/secrets/github_token); \
-		NUGET_CONFIG=/tmp/nuget.config; \
-		printf "%s\n" \
-			"<?xml version=\"1.0\" encoding=\"utf-8\"?>" \
-			"<configuration>" \
-			"  <packageSources>" \
-			"    <add key=\"GitHubPackages\" value=\"${VCPKG_FEED_URL}\" />" \
-			"  </packageSources>" \
-			"  <packageSourceCredentials>" \
-			"    <GitHubPackages>" \
-			"      <add key=\"Username\" value=\"${VCPKG_FEED_USERNAME}\" />" \
-			"      <add key=\"ClearTextPassword\" value=\"${NUGET_AUTH_TOKEN}\" />" \
-			"    </GitHubPackages>" \
-			"  </packageSourceCredentials>" \
-			"  <config>" \
-			"    <add key=\"defaultPushSource\" value=\"GitHubPackages\" />" \
-			"  </config>" \
-			"</configuration>" \
-			> "${NUGET_CONFIG}"; \
-		export VCPKG_NUGET_API_KEY="${NUGET_AUTH_TOKEN}"; \
-		export VCPKG_BINARY_SOURCES="clear;nugetconfig,${NUGET_CONFIG},readwrite;nugettimeout,1200"; \
-		export VCPKG_FORCE_SYSTEM_BINARIES=1; \
-		/opt/vcpkg/vcpkg install --x-manifest-root=/opt/vcpkg_manifest --x-install-root=/opt/vcpkg_installed; \
-		rm -f "${NUGET_CONFIG}"; \
-		unset NUGET_AUTH_TOKEN'
+		TOKEN="$(tr -d "\n\r\t " < /run/secrets/github_token 2>/dev/null || true)"; \
+		if [ -n "$TOKEN" ]; then \
+			NUGET_AUTH_TOKEN="$TOKEN"; \
+			NUGET_CONFIG=/tmp/nuget.config; \
+			printf "%s\n" \
+				"<?xml version=\"1.0\" encoding=\"utf-8\"?>" \
+				"<configuration>" \
+				"  <packageSources>" \
+				"    <add key=\"GitHubPackages\" value=\"${VCPKG_FEED_URL}\" />" \
+				"  </packageSources>" \
+				"  <packageSourceCredentials>" \
+				"    <GitHubPackages>" \
+				"      <add key=\"Username\" value=\"${VCPKG_FEED_USERNAME}\" />" \
+				"      <add key=\"ClearTextPassword\" value=\"${NUGET_AUTH_TOKEN}\" />" \
+				"    </GitHubPackages>" \
+				"  </packageSourceCredentials>" \
+				"  <config>" \
+				"    <add key=\"defaultPushSource\" value=\"GitHubPackages\" />" \
+				"  </config>" \
+				"</configuration>" \
+				> "${NUGET_CONFIG}"; \
+			export VCPKG_NUGET_API_KEY="${NUGET_AUTH_TOKEN}"; \
+			export VCPKG_BINARY_SOURCES="clear;nugetconfig,${NUGET_CONFIG},readwrite;nugettimeout,1200"; \
+			export VCPKG_FORCE_SYSTEM_BINARIES=1; \
+			/opt/vcpkg/vcpkg install --x-manifest-root=/opt/vcpkg_manifest --x-install-root=/opt/vcpkg_installed; \
+			rm -f "${NUGET_CONFIG}"; \
+			unset NUGET_AUTH_TOKEN; \
+		else \
+			echo "Canary Docker: token GitHub vazio — vcpkg sem NuGet cache (compilação a partir do código)."; \
+			export VCPKG_BINARY_SOURCES="clear"; \
+			unset VCPKG_NUGET_API_KEY; \
+			export VCPKG_FORCE_SYSTEM_BINARIES=1; \
+			/opt/vcpkg/vcpkg install --x-manifest-root=/opt/vcpkg_manifest --x-install-root=/opt/vcpkg_installed; \
+		fi'
 
 # Stage 2: create build
 FROM dependencies AS build

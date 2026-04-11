@@ -28,6 +28,14 @@ Container::Container(uint16_t type) :
 		m_maxItems = g_configManager().getNumber(STOREINBOX_MAXLIMIT);
 		maxSize = 32;
 	}
+
+	if (const auto infinityBackpackItemId = g_configManager().getNumber(INFINITY_BACKPACK_ITEM_ID);
+	    infinityBackpackItemId > 0 && getID() == static_cast<uint16_t>(infinityBackpackItemId)) {
+		pagination = true;
+		const auto cap = g_configManager().getNumber(INFINITY_BACKPACK_MAX_ITEMS);
+		m_maxItems = cap > 0 ? static_cast<uint32_t>(cap) : 100000U;
+		maxSize = 32;
+	}
 }
 
 Container::Container(uint16_t initType, uint16_t initSize, bool initUnlocked /*= true*/, bool initPagination /*= false*/) :
