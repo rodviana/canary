@@ -11,7 +11,8 @@ OT_SERVER_GAME_PORT="${OT_SERVER_GAME_PORT:-7172}"
 OT_SERVER_STATUS_PORT="${OT_SERVER_STATUS_PORT:-7171}"
 OT_SERVER_TEST_ACCOUNTS="${OT_SERVER_TEST_ACCOUNTS:-false}"
 OT_SERVER_DATA="${OT_SERVER_DATA:-data-otservbr-global}"
-OT_SERVER_MAP="${OT_SERVER_MAP:-https://github.com/opentibiabr/canary/releases/download/v3.1.0/otservbr.otbm}"
+# Raw no GitHub (mesmo .otbm que config.lua fun-server); gravado em world/otservbr.otbm
+OT_SERVER_MAP="${OT_SERVER_MAP:-https://raw.githubusercontent.com/rodviana/canary/rodrigo/data-otservbr-global/world/custom/otservbr-custom.otbm}"
 
 echo ""
 echo "===== Print Variables ====="
