@@ -285,7 +285,7 @@ onlyPremiumAccount = false
 depotChest = 4
 autoLoot = true
 autoBank = true
-toggleGoldPouchAllowAnything = false
+toggleGoldPouchAllowAnything = true
 toggleGoldPouchQuickLootOnly = false
 toggleServerIsRetroPVP = false
 toggleTravelsFree = false
@@ -296,9 +296,9 @@ toggleReceiveReward = false
 randomMonsterSpawn = false
 lootPouchMaxLimit = 2000
 storeInboxMaxLimit = 2000
--- Server item id that gets huge paginated capacity (any pickupable item). Default 2854 = all normal backpacks.
--- Set to a dedicated custom item id in data/items/items.xml if you only want the starter bag to be special.
-infinityBackpackItemId = 2854
+-- Server item id that gets huge paginated capacity (any pickupable item). 23721 = store "Backpack of Infinity" (gold pouch).
+-- Use 2854 if you want every normal backpack to share this behaviour instead.
+infinityBackpackItemId = 23721
 infinityBackpackMaxItems = 100000
 enablePlayerPutItemInAmmoSlot = false
 startStreakLevel = 0

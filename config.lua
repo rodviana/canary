@@ -298,7 +298,7 @@ lootPouchMaxLimit = 2000
 storeInboxMaxLimit = 2000
 -- Server item id that gets huge paginated capacity (any pickupable item). Default 2854 = all normal backpacks.
 -- Set to a dedicated custom item id in data/items/items.xml if you only want the starter bag to be special.
-infinityBackpackItemId = 2854
+infinityBackpackItemId = 23721
 infinityBackpackMaxItems = 100000
 enablePlayerPutItemInAmmoSlot = false
 startStreakLevel = 0

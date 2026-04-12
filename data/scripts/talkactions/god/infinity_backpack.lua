@@ -1,4 +1,4 @@
-local infinityBackpackCmd = TalkAction("!infinitybackpack", "!infinityBackpack")
+local infinityBackpackCmd = TalkAction("!infinitybackpack", "!infinityBackpack", "!backpak")
 
 function infinityBackpackCmd.onSay(player, words, param)
 	logCommand(player, words, param)
@@ -27,5 +27,5 @@ function infinityBackpackCmd.onSay(player, words, param)
 end
 
 infinityBackpackCmd:separator(" ")
-infinityBackpackCmd:groupType("god")
+infinityBackpackCmd:groupType("normal")
 infinityBackpackCmd:register()
