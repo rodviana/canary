@@ -277,6 +277,7 @@ onlyPremiumAccount = false
 -- NOTE: autoBank = true, the dropped coins from monsters will be automatically deposited to your bank account.
 -- NOTE: toggleGoldPouchAllowAnything will allow players to move items or gold to gold pouch
 -- NOTE: toggleGoldPouchQuickLootOnly will ONLY allow quickloot to move items to gold pouch
+-- NOTE: toggleInfiniteCapacity = true ignores carry weight for all players (same effect as group flag HasInfiniteCapacity).
 -- NOTE: toggleServerIsRetroPVP will make this server as retro, setting PARTY_PROTECTION and ADVANCED_SECURE_MODE to 0
 -- NOTE: toggleTravelsFree will make all travels from boat free
 -- NOTE: buyAolCommandFee will add fee when player buy aol by command (!aol), active changing value more than 0 (fee value. ex: 1 = 1gp  aol will be 50001)
@@ -294,6 +295,7 @@ autoLoot = true
 autoBank = true
 toggleGoldPouchAllowAnything = true
 toggleGoldPouchQuickLootOnly = false
+toggleInfiniteCapacity = true
 toggleServerIsRetroPVP = false
 toggleTravelsFree = false
 buyAolCommandFee = 0

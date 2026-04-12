@@ -985,7 +985,7 @@ int32_t Player::getCleavePercent(bool useCharges) const {
 }
 
 void Player::updateInventoryWeight() {
-	if (hasFlag(PlayerFlags_t::HasInfiniteCapacity)) {
+	if (usesGlobalInfiniteCapacity()) {
 		return;
 	}
 
@@ -4235,12 +4235,16 @@ void Player::sendForgingData() const {
 	}
 }
 
+bool Player::usesGlobalInfiniteCapacity() const {
+	return hasFlag(PlayerFlags_t::HasInfiniteCapacity) || g_configManager().getBoolean(TOGGLE_INFINITE_CAPACITY);
+}
+
 bool Player::hasCapacity(const std::shared_ptr<Item> &item, uint32_t count) const {
 	if (hasFlag(PlayerFlags_t::CannotPickupItem)) {
 		return false;
 	}
 
-	if (hasFlag(PlayerFlags_t::HasInfiniteCapacity) || item->getTopParent().get() == this) {
+	if (usesGlobalInfiniteCapacity() || item->getTopParent().get() == this) {
 		return true;
 	}
 
@@ -5116,7 +5120,7 @@ uint32_t Player::getBaseCapacity() const {
 	if (hasFlag(PlayerFlags_t::CannotPickupItem)) {
 		return 0;
 	}
-	if (hasFlag(PlayerFlags_t::HasInfiniteCapacity)) {
+	if (usesGlobalInfiniteCapacity()) {
 		return std::numeric_limits<uint32_t>::max();
 	}
 	return capacity;
@@ -5126,14 +5130,14 @@ uint32_t Player::getCapacity() const {
 	if (hasFlag(PlayerFlags_t::CannotPickupItem)) {
 		return 0;
 	}
-	if (hasFlag(PlayerFlags_t::HasInfiniteCapacity)) {
+	if (usesGlobalInfiniteCapacity()) {
 		return std::numeric_limits<uint32_t>::max();
 	}
 	return capacity + bonusCapacity + varStats[STAT_CAPACITY] + (m_wheelPlayer.getStat(WheelStat_t::CAPACITY) * 100);
 }
 
 uint32_t Player::getBonusCapacity() const {
-	if (hasFlag(PlayerFlags_t::CannotPickupItem) || hasFlag(PlayerFlags_t::HasInfiniteCapacity)) {
+	if (hasFlag(PlayerFlags_t::CannotPickupItem) || usesGlobalInfiniteCapacity()) {
 		return std::numeric_limits<uint32_t>::max();
 	}
 	return bonusCapacity;
@@ -5142,7 +5146,7 @@ uint32_t Player::getBonusCapacity() const {
 uint32_t Player::getFreeCapacity() const {
 	if (hasFlag(PlayerFlags_t::CannotPickupItem)) {
 		return 0;
-	} else if (hasFlag(PlayerFlags_t::HasInfiniteCapacity)) {
+	} else if (usesGlobalInfiniteCapacity()) {
 		return std::numeric_limits<uint32_t>::max();
 	} else {
 		return std::max<int32_t>(0, getCapacity() - inventoryWeight);

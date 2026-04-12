@@ -1511,6 +1511,7 @@ private:
 	std::vector<std::shared_ptr<Condition>> getMuteConditions() const;
 
 	void checkTradeState(const std::shared_ptr<Item> &item);
+	[[nodiscard]] bool usesGlobalInfiniteCapacity() const;
 	bool hasCapacity(const std::shared_ptr<Item> &item, uint32_t count) const;
 	bool processStashItem(const std::shared_ptr<Item> &item, uint16_t itemCount, uint16_t &refreshDepotSearchOnItem);
 
