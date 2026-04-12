@@ -121,11 +121,11 @@ augmentStrongImpactPercent = 10
 -- NOTE: preyFreeRerollTime: Time in seconds that players will have to wait to get a new free prey list.
 preySystemEnabled = true
 preyFreeThirdSlot = true
-preyRerollPricePerLevel = 40
+preyRerollPricePerLevel = 10
 preySelectListPrice = 1
 preyBonusRerollPrice = 1
-preyBonusTime = 6 * 60 * 60
-preyFreeRerollTime = 6 * 60 * 60
+preyBonusTime = 12 * 60 * 60
+preyFreeRerollTime = 60 * 60
 
 -- Task hunting system
 -- NOTE: taskHuntingLimitedTasksExhaust: Time to wait to select a new creature on the task hunting slot after claiming the reward.
@@ -304,7 +304,7 @@ infinityBackpackItemId = 23721
 infinityBackpackMaxItems = 100000
 enablePlayerPutItemInAmmoSlot = false
 startStreakLevel = 0
-showLootsInBestiary = false
+showLootsInBestiary = true
 minTownIdToBankTransferFromMain = 4
 enableSupportOutfit = true
 
