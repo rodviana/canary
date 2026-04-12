@@ -191,8 +191,8 @@ transcendenceAvatarDuration = 7000
 -- Bestiary & Bosstiary system
 -- NOTE: bestiaryKillMultiplier, multiplier value of monster killed, default 1
 -- NOTE: bosstiaryKillMultiplier, multiplier value of boss killed, default 1
-bestiaryKillMultiplier = 1
-bosstiaryKillMultiplier = 1
+bestiaryKillMultiplier = 20
+bosstiaryKillMultiplier = 20
 bestiaryRateCharmShopPrice  = 1.0
 boostedBossSlot = true
 boostedBossLootBonus = 250
@@ -499,7 +499,7 @@ globalServerSaveNotifyDuration = 5
 globalServerSaveCleanMap = false
 globalServerSaveClose = false
 globalServerSaveShutdown = true
-globalServerSaveTime = "06:00:00"
+globalServerSaveTime = "12:00:00"
 
 -- Sort loot by chance, most rare items drop first
 -- it is good to be setted when you have a higher
@@ -514,7 +514,7 @@ sortLootByChance = false
 -- lowLevelBonusExp works up to level 50
 rateUseStages = false
 lowLevelBonusExp = 50
-rateExp = 10
+rateExp = 20
 rateSkill = 10
 rateLoot = 10
 rateMagic = 10
