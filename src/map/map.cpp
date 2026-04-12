@@ -35,18 +35,39 @@ void Map::loadMap(const std::string &identifier, bool mainMap /*= false*/, bool 
 		const auto mapDownloadUrl = g_configManager().getString(MAP_DOWNLOAD_URL);
 		if (mapDownloadUrl.empty()) {
 			g_logger().warn("Map download URL in config.lua is empty, download disabled");
-		}
-
-		if (CURL* curl = curl_easy_init(); curl && !mapDownloadUrl.empty()) {
-			g_logger().info("Downloading " + g_configManager().getString(MAP_NAME) + ".otbm to world folder");
+		} else if (CURL* curl = curl_easy_init()) {
+			g_logger().info("Downloading {}.otbm to world folder", g_configManager().getString(MAP_NAME));
 			FILE* otbm = fopen(identifier.c_str(), "wb");
-			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_URL, mapDownloadUrl.c_str());
-			curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, otbm);
-			curl_easy_perform(curl);
-			curl_easy_cleanup(curl);
-			fclose(otbm);
+			if (otbm == nullptr) {
+				g_logger().error("Could not open {} for writing (map download aborted)", identifier);
+				curl_easy_cleanup(curl);
+			} else {
+				curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+				curl_easy_setopt(curl, CURLOPT_URL, mapDownloadUrl.c_str());
+				curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+				curl_easy_setopt(curl, CURLOPT_WRITEDATA, otbm);
+				curl_easy_setopt(curl, CURLOPT_USERAGENT, "Canary/OTServ (map download)");
+				const CURLcode curlResult = curl_easy_perform(curl);
+				long httpCode = 0;
+				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+				curl_easy_cleanup(curl);
+				if (fclose(otbm) != 0) {
+					g_logger().warn("fclose failed after map download for {}", identifier);
+				}
+				const bool httpOk = httpCode >= 200 && httpCode < 300;
+				if (curlResult != CURLE_OK || !httpOk) {
+					if (curlResult != CURLE_OK) {
+						g_logger().error("Map download failed: {} (HTTP {})", curl_easy_strerror(curlResult), httpCode);
+					} else {
+						g_logger().error("Map download failed: HTTP {} from {}", httpCode, mapDownloadUrl);
+					}
+					std::error_code removeEc;
+					std::filesystem::remove(identifier, removeEc);
+					if (removeEc) {
+						g_logger().warn("Could not remove partial map file {}: {}", identifier, removeEc.message());
+					}
+				}
+			}
 		}
 	}
 
