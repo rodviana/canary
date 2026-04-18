@@ -140,15 +140,16 @@ function loadLuaMapBookDocument(tablename)
 						item:setAttribute(ITEM_ATTRIBUTE_TEXT, value.text)
 						totals[2] = totals[2] + 1
 					else
-						logger.warn("[loadLuaMapBookDocument] - Item not found! Index: {}, itemId: {}", index, value.itemId)
+						logger.debug("[loadLuaMapBookDocument] - Item not found! Index: {}, itemId: {}", index, value.itemId)
 						goto continue
 					end
 				else
-					logger.warn("[loadLuaMapBookDocument] - Container not found! Index: {}, containerId: {}", index, value.containerId)
+					logger.debug("[loadLuaMapBookDocument] - Container not found! Index: {}, containerId: {}", index, value.containerId)
 					goto continue
 				end
 			else
-				logger.warn("[loadLuaMapBookDocument] - Tile not found! Index: {}, position: x: {} y: {} z: {}", index, value.position.x, value.position.y, value.position.z)
+				-- Mapa parcial/custom: posições do datapack global podem não existir — evitar spam em loglevel info.
+				logger.debug("[loadLuaMapBookDocument] - Tile not found! Index: {}, position: x: {} y: {} z: {}", index, value.position.x, value.position.y, value.position.z)
 				goto continue
 			end
 		end
