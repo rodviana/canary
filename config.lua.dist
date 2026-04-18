@@ -410,7 +410,7 @@ pushWhenAttacking = false
 --   TAG_DO_RELEASE = nome exato da tag na página Releases; nome_do_asset = nome do ficheiro em Assets.
 -- Repositório privado: o Canary não envia token; use mapa local ou URL pública.
 toggleDownloadMap = true
-mapDownloadUrl = "https://github.com/rodviana/canary/releases/download/teste/otservbr.otbm"
+mapDownloadUrl = "https://github.com/opentibiabr/canary/releases/download/v3.4.1/otservbr.otbm"
 mapName = "otservbr"
 mapAuthor = "rodviana"
 

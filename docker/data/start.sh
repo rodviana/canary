@@ -13,7 +13,7 @@ OT_SERVER_TEST_ACCOUNTS="${OT_SERVER_TEST_ACCOUNTS:-false}"
 OT_SERVER_DATA="${OT_SERVER_DATA:-data-otservbr-global}"
 # Deve ser o MESMO .otbm global que mapDownloadUrl em config.lua (não uses o custom como mapa principal).
 # Gravado em data-otservbr-global/world/otservbr.otbm (nome fixo; mapName em config = otservbr).
-OT_SERVER_MAP="${OT_SERVER_MAP:-https://github.com/rodviana/canary/releases/download/teste/otservbr.otbm}"
+OT_SERVER_MAP="${OT_SERVER_MAP:-https://github.com/opentibiabr/canary/releases/download/v3.4.1/otservbr.otbm}"
 # Se 1/true, apaga world/otservbr.otbm antes do curl (útil após ter sido gravado o mapa custom/errado).
 OT_SERVER_MAP_FORCE="${OT_SERVER_MAP_FORCE:-false}"
 
