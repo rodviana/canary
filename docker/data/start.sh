@@ -52,7 +52,11 @@ if [ "$OT_SERVER_DATA" = "data-otservbr-global" ] && [ ! -f data-otservbr-global
 	echo "Done"
 
 else
-	echo "Not Using OTBR Data pack"
+	if [ "$OT_SERVER_DATA" = "data-otservbr-global" ] && [ -f data-otservbr-global/world/otservbr.otbm ]; then
+		echo "OTBR map already present (data-otservbr-global/world/otservbr.otbm) — skip curl"
+	else
+		echo "Skipping OTBR map curl (OT_SERVER_DATA is not data-otservbr-global or path not used)"
+	fi
 fi
 
 echo ""
@@ -139,16 +143,25 @@ echo ""
 echo "===== Apply Server Configuration on config.lua ====="
 echo ""
 
-sed -i "/mysqlHost = .*$/c\mysqlHost = \"$OT_DB_HOST\"" config.lua
-sed -i "/mysqlUser = .*$/c\mysqlUser = \"$OT_DB_USER\"" config.lua
-sed -i "/mysqlPass = .*$/c\mysqlPass = \"$OT_DB_PASSWORD\"" config.lua
-sed -i "/mysqlPort = .*$/c\mysqlPort = $OT_DB_PORT" config.lua
-sed -i "/mysqlDatabase = .*$/c\mysqlDatabase = \"$OT_DB_DATABASE\"" config.lua
-sed -i "/ip = .*$/c\ip = \"$OT_SERVER_IP\"" config.lua
-sed -i "/loginProtocolPort = .*$/c\loginProtocolPort = $OT_SERVER_LOGIN_PORT" config.lua
-sed -i "/gameProtocolPort = .*$/c\gameProtocolPort = $OT_SERVER_GAME_PORT" config.lua
-sed -i "/statusProtocolPort = .*$/c\statusProtocolPort = $OT_SERVER_STATUS_PORT" config.lua
-sed -i "/dataPackDirectory = .*$/c\dataPackDirectory = \"$OT_SERVER_DATA\"" config.lua
+# sed -i no próprio config.lua sob bind-mount falha ("Device or resource busy"). Editar em /tmp e copiar.
+CFG_TMP="/tmp/config.lua.$$"
+cp -f config.lua "$CFG_TMP"
+sed -i "/mysqlHost = .*$/c\mysqlHost = \"$OT_DB_HOST\"" "$CFG_TMP"
+sed -i "/mysqlUser = .*$/c\mysqlUser = \"$OT_DB_USER\"" "$CFG_TMP"
+sed -i "/mysqlPass = .*$/c\mysqlPass = \"$OT_DB_PASSWORD\"" "$CFG_TMP"
+sed -i "/mysqlPort = .*$/c\mysqlPort = $OT_DB_PORT" "$CFG_TMP"
+sed -i "/mysqlDatabase = .*$/c\mysqlDatabase = \"$OT_DB_DATABASE\"" "$CFG_TMP"
+sed -i "/ip = .*$/c\ip = \"$OT_SERVER_IP\"" "$CFG_TMP"
+sed -i "/loginProtocolPort = .*$/c\loginProtocolPort = $OT_SERVER_LOGIN_PORT" "$CFG_TMP"
+sed -i "/gameProtocolPort = .*$/c\gameProtocolPort = $OT_SERVER_GAME_PORT" "$CFG_TMP"
+sed -i "/statusProtocolPort = .*$/c\statusProtocolPort = $OT_SERVER_STATUS_PORT" "$CFG_TMP"
+sed -i "/dataPackDirectory = .*$/c\dataPackDirectory = \"$OT_SERVER_DATA\"" "$CFG_TMP"
+if ! cp -f "$CFG_TMP" config.lua; then
+	echo "ERROR: cannot write config.lua (montagem só-leitura?)." >&2
+	rm -f "$CFG_TMP"
+	exit 1
+fi
+rm -f "$CFG_TMP"
 
 cat config.lua
 
