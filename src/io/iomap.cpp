@@ -12,6 +12,9 @@
 #include "game/movement/teleport.hpp"
 #include "game/game.hpp"
 #include "io/filestream.hpp"
+#include "utils/benchmark.hpp"
+
+#include <filesystem>
 
 /*
     OTBM_ROOTV1
@@ -39,8 +42,20 @@
 
 void IOMap::loadMap(Map* map, const Position &pos) {
 	Benchmark bm_mapLoad;
+	const bool verbose = g_configManager().getBoolean(TOGGLE_MAP_LOAD_VERBOSE);
+	const std::string pathStr = map->path.string();
 
-	const auto &fileByte = mio::mmap_source(map->path.string());
+	if (verbose) {
+		std::error_code ec;
+		const auto fileSize = std::filesystem::file_size(map->path, ec);
+		if (ec) {
+			g_logger().warn("[IOMap::loadMap] could not read file size for {}: {}", pathStr, ec.message());
+		} else {
+			g_logger().info("[IOMap::loadMap] opening {} ({} bytes)", pathStr, fileSize);
+		}
+	}
+
+	const auto &fileByte = mio::mmap_source(pathStr);
 
 	const auto begin = fileByte.begin() + sizeof(OTB::Identifier { { 'O', 'T', 'B', 'M' } });
 
@@ -56,7 +71,7 @@ void IOMap::loadMap(Map* map, const Position &pos) {
 	map->width = stream.getU16();
 	map->height = stream.getU16();
 	uint32_t majorVersionItems = stream.getU32();
-	stream.getU32(); // minorVersionItems
+	const uint32_t minorVersionItems = stream.getU32();
 
 	if (version > 5) {
 		throw IOMapException("Unknown OTBM version detected.");
@@ -66,18 +81,78 @@ void IOMap::loadMap(Map* map, const Position &pos) {
 		throw IOMapException("This map need to be upgraded by using the latest map editor version to be able to load correctly.");
 	}
 
-	if (stream.startNode(OTBM_MAP_DATA)) {
-		parseMapDataAttributes(stream, map);
-		parseTileArea(stream, *map, pos);
-		stream.endNode();
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] OTBM header: format version {} | map size {}x{} | items.dat major {} minor {}", version, map->width, map->height, majorVersionItems, minorVersionItems);
 	}
 
-	parseTowns(stream, *map);
-	parseWaypoints(stream, *map);
+	MapLoadStats stats;
 
+	Benchmark bm_mapData;
+	if (stream.startNode(OTBM_MAP_DATA)) {
+		parseMapDataAttributes(stream, map);
+		if (verbose) {
+			const auto showPath = [](const std::string &p) -> std::string {
+				return p.empty() ? std::string("(not set; defaults apply)") : p;
+			};
+			g_logger().info("[IOMap::loadMap] embedded spawn paths — monster: {} | npc: {} | house: {} | zones: {}", showPath(map->monsterfile), showPath(map->npcfile), showPath(map->housefile), showPath(map->zonesfile));
+		}
+		parseTileArea(stream, *map, pos, stats);
+		stream.endNode();
+	}
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] map data + tiles section: {} ms", bm_mapData.duration());
+	}
+
+	Benchmark bm_towns;
+	parseTowns(stream, *map, stats);
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] towns section: {} ms ({} towns)", bm_towns.duration(), stats.towns);
+	}
+
+	Benchmark bm_waypoints;
+	parseWaypoints(stream, *map, stats);
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] waypoints section: {} ms ({} entries, {} duplicate names)", bm_waypoints.duration(), stats.waypoints, stats.duplicateWaypointNames);
+	}
+
+	Benchmark bm_flush;
 	map->flush();
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] map flush: {} ms", bm_flush.duration());
+	}
 
-	g_logger().debug("Map Loaded {} ({}x{}) in {} milliseconds", map->path.filename().string(), map->width, map->height, bm_mapLoad.duration());
+	if (stats.duplicateTileOverwrites > 0) {
+		g_logger().warn("[IOMap::loadMap] {} duplicate tile position(s) in OTBM (later fragment wins)", stats.duplicateTileOverwrites);
+	}
+	if (stats.outOfBoundsTiles > 0) {
+		g_logger().warn("[IOMap::loadMap] {} tile(s) outside declared map bounds {}x{} (verify editor export / OTBM header)", stats.outOfBoundsTiles, map->width, map->height);
+	}
+	if (stats.duplicateWaypointNames > 0) {
+		g_logger().warn("[IOMap::loadMap] {} duplicate waypoint name(s) in OTBM (later entry wins)", stats.duplicateWaypointNames);
+	}
+
+	const std::string summary = fmt::format(
+		"{} | {}x{} | {} ms | tile areas {} | tile nodes {} | placed {} | skipped empty {} | dup writes {} | OOB {} | towns {} | waypoints {} | dup waypoint names {}",
+		map->path.filename().string(),
+		map->width,
+		map->height,
+		bm_mapLoad.duration(),
+		stats.tileAreas,
+		stats.tileNodes,
+		stats.placedTiles,
+		stats.skippedEmptyTiles,
+		stats.duplicateTileOverwrites,
+		stats.outOfBoundsTiles,
+		stats.towns,
+		stats.waypoints,
+		stats.duplicateWaypointNames
+	);
+
+	if (verbose) {
+		g_logger().info("[IOMap::loadMap] summary: {}", summary);
+	} else {
+		g_logger().debug("Map Loaded {}", summary);
+	}
 }
 
 void IOMap::parseMapDataAttributes(FileStream &stream, Map* map) {
@@ -116,13 +191,15 @@ void IOMap::parseMapDataAttributes(FileStream &stream, Map* map) {
 	}
 }
 
-void IOMap::parseTileArea(FileStream &stream, Map &map, const Position &pos) {
+void IOMap::parseTileArea(FileStream &stream, Map &map, const Position &pos, MapLoadStats &stats) {
 	while (stream.startNode(OTBM_TILE_AREA)) {
+		stats.tileAreas++;
 		const uint16_t base_x = stream.getU16();
 		const uint16_t base_y = stream.getU16();
 		const uint8_t base_z = stream.getU8();
 
 		while (stream.startNode()) {
+			stats.tileNodes++;
 			const uint8_t tileType = stream.getU8();
 			if (tileType != OTBM_HOUSETILE && tileType != OTBM_TILE) {
 				throw IOMapException("Could not read tile type node.");
@@ -231,9 +308,23 @@ void IOMap::parseTileArea(FileStream &stream, Map &map, const Position &pos) {
 			}
 
 			if (tile->isEmpty(true)) {
+				stats.skippedEmptyTiles++;
 				continue;
 			}
 
+			if (map.width > 0 && map.height > 0 && (x >= map.width || y >= map.height)) {
+				stats.outOfBoundsTiles++;
+			}
+
+			if (const auto sector = map.getMapSector(x, y)) {
+				if (const auto floor = sector->getFloor(z)) {
+					if (floor->getTileCache(x, y)) {
+						stats.duplicateTileOverwrites++;
+					}
+				}
+			}
+
+			stats.placedTiles++;
 			map.setBasicTile(x, y, z, tile);
 		}
 
@@ -243,12 +334,13 @@ void IOMap::parseTileArea(FileStream &stream, Map &map, const Position &pos) {
 	}
 }
 
-void IOMap::parseTowns(FileStream &stream, Map &map) {
+void IOMap::parseTowns(FileStream &stream, Map &map, MapLoadStats &stats) {
 	if (!stream.startNode(OTBM_TOWNS)) {
 		throw IOMapException("Could not read towns node.");
 	}
 
 	while (stream.startNode(OTBM_TOWN)) {
+		stats.towns++;
 		const uint32_t townId = stream.getU32();
 		const auto &townName = stream.getString();
 		const uint16_t x = stream.getU16();
@@ -269,7 +361,9 @@ void IOMap::parseTowns(FileStream &stream, Map &map) {
 	}
 }
 
-void IOMap::parseWaypoints(FileStream &stream, Map &map) {
+void IOMap::parseWaypoints(FileStream &stream, Map &map, MapLoadStats &stats) {
+	const bool verbose = g_configManager().getBoolean(TOGGLE_MAP_LOAD_VERBOSE);
+
 	if (!stream.startNode(OTBM_WAYPOINTS)) {
 		throw IOMapException("Could not read waypoints node.");
 	}
@@ -280,7 +374,15 @@ void IOMap::parseWaypoints(FileStream &stream, Map &map) {
 		const uint16_t y = stream.getU16();
 		const uint8_t z = stream.getU8();
 
+		if (const auto it = map.waypoints.find(name); it != map.waypoints.end()) {
+			stats.duplicateWaypointNames++;
+			if (verbose) {
+				g_logger().warn("[IOMap::loadMap] duplicate waypoint name '{}' — was {} now {}", name, it->second.toString(), Position(x, y, z).toString());
+			}
+		}
+
 		map.waypoints[name] = Position(x, y, z);
+		stats.waypoints++;
 
 		if (!stream.endNode()) {
 			throw IOMapException("Could not end node.");

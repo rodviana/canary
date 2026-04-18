@@ -20,6 +20,18 @@
 #include "creatures/npcs/spawns/spawn_npc.hpp"
 #include "game/zones/zone.hpp"
 
+struct MapLoadStats {
+	uint64_t tileAreas = 0;
+	uint64_t tileNodes = 0;
+	uint64_t placedTiles = 0;
+	uint64_t skippedEmptyTiles = 0;
+	uint64_t duplicateTileOverwrites = 0;
+	uint64_t outOfBoundsTiles = 0;
+	uint64_t towns = 0;
+	uint64_t waypoints = 0;
+	uint64_t duplicateWaypointNames = 0;
+};
+
 class IOMap {
 public:
 	static void loadMap(Map* map, const Position &pos = Position());
@@ -151,9 +163,9 @@ public:
 
 private:
 	static void parseMapDataAttributes(FileStream &stream, Map* map);
-	static void parseWaypoints(FileStream &stream, Map &map);
-	static void parseTowns(FileStream &stream, Map &map);
-	static void parseTileArea(FileStream &stream, Map &map, const Position &pos);
+	static void parseWaypoints(FileStream &stream, Map &map, MapLoadStats &stats);
+	static void parseTowns(FileStream &stream, Map &map, MapLoadStats &stats);
+	static void parseTileArea(FileStream &stream, Map &map, const Position &pos, MapLoadStats &stats);
 };
 
 class IOMapException : public std::exception {

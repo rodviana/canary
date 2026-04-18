@@ -19,24 +19,30 @@
 #include "lua/callbacks/events_callbacks.hpp"
 #include "map/spectators.hpp"
 #include "utils/astarnodes.hpp"
+#include "utils/benchmark.hpp"
 
 void Map::load(const std::string &identifier, const Position &pos) {
 	try {
 		path = identifier;
 		IOMap::loadMap(this, pos);
 	} catch (const std::exception &e) {
-		g_logger().warn("[Map::load] - The map in folder {} is missing or corrupted", identifier);
+		g_logger().error("[Map::load] failed to load {}: {}", identifier, e.what());
 	}
 }
 
 void Map::loadMap(const std::string &identifier, bool mainMap /*= false*/, bool loadHouses /*= false*/, bool loadMonsters /*= false*/, bool loadNpcs /*= false*/, bool loadZones /*= false*/, const Position &pos /*= Position()*/) {
+	const bool verbose = g_configManager().getBoolean(TOGGLE_MAP_LOAD_VERBOSE);
+	if (verbose) {
+		g_logger().info("[Map::loadMap] path={} mainMap={} load: houses={} monsters={} npcs={} zones={}", identifier, mainMap, loadHouses, loadMonsters, loadNpcs, loadZones);
+	}
+
 	// Only download map if is loading the main map and it is not already downloaded
 	if (mainMap && g_configManager().getBoolean(TOGGLE_DOWNLOAD_MAP) && !std::filesystem::exists(identifier)) {
 		const auto mapDownloadUrl = g_configManager().getString(MAP_DOWNLOAD_URL);
 		if (mapDownloadUrl.empty()) {
 			g_logger().warn("Map download URL in config.lua is empty, download disabled");
 		} else if (CURL* curl = curl_easy_init()) {
-			g_logger().info("Downloading {}.otbm to world folder", g_configManager().getString(MAP_NAME));
+			g_logger().info("[Map::loadMap] downloading map: GET {} -> {}", mapDownloadUrl, identifier);
 			FILE* otbm = fopen(identifier.c_str(), "wb");
 			if (otbm == nullptr) {
 				g_logger().error("Could not open {} for writing (map download aborted)", identifier);
@@ -66,28 +72,58 @@ void Map::loadMap(const std::string &identifier, bool mainMap /*= false*/, bool 
 					if (removeEc) {
 						g_logger().warn("Could not remove partial map file {}: {}", identifier, removeEc.message());
 					}
+				} else {
+					std::error_code ec;
+					const auto sz = std::filesystem::file_size(identifier, ec);
+					if (!ec) {
+						g_logger().info("[Map::loadMap] download OK: {} bytes written to {}", sz, identifier);
+					} else {
+						g_logger().info("[Map::loadMap] download OK: {}", identifier);
+					}
 				}
 			}
 		}
 	}
 
 	// Load the map
+	Benchmark bm_otbm;
 	load(identifier, pos);
+	if (verbose) {
+		g_logger().info("[Map::loadMap] OTBM parse + cache flush: {} ms", bm_otbm.duration());
+	}
 
 	// Only create items from lua functions if is loading main map
 	// It needs to be after the load map to ensure the map already exists before creating the items
 	if (mainMap) {
 		// Create items from lua scripts per position
 		// Example: ActionFunctions::luaActionPosition
+		Benchmark bm_luaItems;
 		g_game().createLuaItemsOnMap();
+		if (verbose) {
+			g_logger().info("[Map::loadMap] createLuaItemsOnMap: {} ms", bm_luaItems.duration());
+		}
 	}
 
 	if (loadMonsters) {
-		IOMap::loadMonsters(this);
+		Benchmark bm;
+		const bool ok = IOMap::loadMonsters(this);
+		if (verbose) {
+			g_logger().info("[Map::loadMap] loadMonsters ({}): {} ms", monsterfile.empty() ? "default path" : monsterfile, bm.duration());
+		}
+		if (!ok) {
+			g_logger().warn("[Map::loadMap] loadMonsters returned false for {}", monsterfile.empty() ? "(default)" : monsterfile);
+		}
 	}
 
 	if (loadHouses) {
-		IOMap::loadHouses(this);
+		Benchmark bm;
+		const bool ok = IOMap::loadHouses(this);
+		if (verbose) {
+			g_logger().info("[Map::loadMap] loadHouses ({}): {} ms", housefile.empty() ? "default path" : housefile, bm.duration());
+		}
+		if (!ok) {
+			g_logger().warn("[Map::loadMap] loadHouses returned false for {}", housefile.empty() ? "(default)" : housefile);
+		}
 
 		/**
 		 * Only load houses items if map custom load is disabled
@@ -95,17 +131,39 @@ void Map::loadMap(const std::string &identifier, bool mainMap /*= false*/, bool 
 		 * NOTE: This will ensure that the information is not duplicated
 		 */
 		if (!g_configManager().getBoolean(TOGGLE_MAP_CUSTOM)) {
+			Benchmark bmInfo;
 			IOMapSerialize::loadHouseInfo();
+			if (verbose) {
+				g_logger().info("[Map::loadMap] loadHouseInfo (DB): {} ms", bmInfo.duration());
+			}
+			Benchmark bmItems;
 			IOMapSerialize::loadHouseItems(this);
+			if (verbose) {
+				g_logger().info("[Map::loadMap] loadHouseItems: {} ms", bmItems.duration());
+			}
 		}
 	}
 
 	if (loadNpcs) {
-		IOMap::loadNpcs(this);
+		Benchmark bm;
+		const bool ok = IOMap::loadNpcs(this);
+		if (verbose) {
+			g_logger().info("[Map::loadMap] loadNpcs ({}): {} ms", npcfile.empty() ? "default path" : npcfile, bm.duration());
+		}
+		if (!ok) {
+			g_logger().warn("[Map::loadMap] loadNpcs returned false for {}", npcfile.empty() ? "(default)" : npcfile);
+		}
 	}
 
 	if (loadZones) {
-		IOMap::loadZones(this);
+		Benchmark bm;
+		const bool ok = IOMap::loadZones(this);
+		if (verbose) {
+			g_logger().info("[Map::loadMap] loadZones ({}): {} ms", zonesfile.empty() ? "default path" : zonesfile, bm.duration());
+		}
+		if (!ok) {
+			g_logger().warn("[Map::loadMap] loadZones returned false for {}", zonesfile.empty() ? "(default)" : zonesfile);
+		}
 	}
 
 	// Files need to be cleaned up if custom map is enabled to open, or will try to load main map files
@@ -121,8 +179,18 @@ void Map::loadMap(const std::string &identifier, bool mainMap /*= false*/, bool 
 }
 
 void Map::loadMapCustom(const std::string &mapName, bool loadHouses, bool loadMonsters, bool loadNpcs, bool loadZones, int customMapIndex) {
+	const bool verbose = g_configManager().getBoolean(TOGGLE_MAP_LOAD_VERBOSE);
+	const std::string customPath = g_configManager().getString(DATA_DIRECTORY) + "/world/custom/" + mapName + ".otbm";
+	if (verbose) {
+		g_logger().info("[Map::loadMapCustom] path={} index={} houses={} monsters={} npcs={} zones={}", customPath, customMapIndex, loadHouses, loadMonsters, loadNpcs, loadZones);
+	}
+
 	// Load the map
-	load(g_configManager().getString(DATA_DIRECTORY) + "/world/custom/" + mapName + ".otbm");
+	Benchmark bm_otbm;
+	load(customPath);
+	if (verbose) {
+		g_logger().info("[Map::loadMapCustom] OTBM parse + flush: {} ms", bm_otbm.duration());
+	}
 
 	if (loadMonsters && !IOMap::loadMonstersCustom(this, mapName, customMapIndex)) {
 		g_logger().warn("Failed to load monster custom data");
