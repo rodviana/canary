@@ -1,7 +1,8 @@
 -- Core settings
--- Note: If you want to use datapack folder canary (custom), put only "data-canary"
--- If you want to use the global datapack folder, put "data-otservbr-global"
--- If "useAnyDatapackFolder" is set to true then you can choose any datapack folder for your server
+-- Datapack (OpenTibiaBR):
+--   "data-otservbr-global" = datapack oficial Global (OTSERVBR-Global) — recomendado com mapa global e Docker.
+--   "data-canary" = datapack minimal para testes.
+-- Se useAnyDatapackFolder = true, podes usar outro nome de pasta (validação no servidor relaxada).
 useAnyDatapackFolder = false
 dataPackDirectory = "data-otservbr-global"
 -- Don't change this unless you know what you're doing
