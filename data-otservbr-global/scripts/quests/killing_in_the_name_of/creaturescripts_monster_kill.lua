@@ -1,12 +1,15 @@
+-- Each valid kill adds this many toward Killing in the Name of / Grizzly Adams quotas.
+local KILL_PROGRESS_MULTIPLIER = 10
+
 local function killCheck(player, targetName, taskName, taskStage, taskInfo, taskAltKillCount, taskkillCount)
 	if player:getStorageValue(taskName) == taskStage then
 		if table.contains(taskInfo, targetName) then
 			for k = 1, #taskInfo do
 				if taskAltKillCount ~= nil and targetName == taskInfo[k] then
-					player:setStorageValue(taskAltKillCount + k - 1, player:getStorageValue(taskAltKillCount + k - 1) + 1)
+					player:setStorageValue(taskAltKillCount + k - 1, player:getStorageValue(taskAltKillCount + k - 1) + KILL_PROGRESS_MULTIPLIER)
 				end
 			end
-			player:setStorageValue(taskkillCount, player:getStorageValue(taskkillCount) + 1)
+			player:setStorageValue(taskkillCount, player:getStorageValue(taskkillCount) + KILL_PROGRESS_MULTIPLIER)
 			player:setStorageValue(taskName, player:getStorageValue(taskName)) -- fake update quest tracker
 		end
 	end
@@ -28,31 +31,31 @@ function deathEvent.onDeath(creature, _corpse, _lastHitKiller, mostDamageKiller)
 						if targetName == tasks.GrizzlyAdams[taskId].creatures[a] then
 							if tasks.GrizzlyAdams[taskId].raceName == "Apes" then
 								local apes = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.KongraCount + a - 1
-								player:setStorageValue(apes, player:getStorageValue(apes) + 1)
+								player:setStorageValue(apes, player:getStorageValue(apes) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "Quara Scouts" then
 								local scouts = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.QuaraConstrictorScoutCount + a - 1
-								player:setStorageValue(scouts, player:getStorageValue(scouts) + 1)
+								player:setStorageValue(scouts, player:getStorageValue(scouts) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "Underwater Quara" then
 								local underwater = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.QuaraConstrictorCount + a - 1
-								player:setStorageValue(underwater, player:getStorageValue(underwater) + 1)
+								player:setStorageValue(underwater, player:getStorageValue(underwater) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "Nightmares" then
 								local nightmares = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.NightmareCount + a - 1
-								player:setStorageValue(nightmares, player:getStorageValue(nightmares) + 1)
+								player:setStorageValue(nightmares, player:getStorageValue(nightmares) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "High Class Lizards" then
 								local lizards = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.LizardChosenCount + a - 1
-								player:setStorageValue(lizards, player:getStorageValue(lizards) + 1)
+								player:setStorageValue(lizards, player:getStorageValue(lizards) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "Sea Serpents" then
 								local serpents = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.SeaSerpentCount + a - 1
-								player:setStorageValue(serpents, player:getStorageValue(serpents) + 1)
+								player:setStorageValue(serpents, player:getStorageValue(serpents) + KILL_PROGRESS_MULTIPLIER)
 							elseif tasks.GrizzlyAdams[taskId].raceName == "Drakens" then
 								local drakens = Storage.Quest.U8_5.KillingInTheNameOf.AltKillCount.DrakenAbominationCount + a - 1
-								player:setStorageValue(drakens, player:getStorageValue(drakens) + 1)
+								player:setStorageValue(drakens, player:getStorageValue(drakens) + KILL_PROGRESS_MULTIPLIER)
 							end
 						end
 					end
 				end
 				local killAmount = player:getStorageValue(killCounter + taskId)
-				player:setStorageValue(killCounter + taskId, killAmount + 1)
+				player:setStorageValue(killCounter + taskId, killAmount + KILL_PROGRESS_MULTIPLIER)
 				player:setStorageValue(KILLSSTORAGE_BASE + taskId, player:getStorageValue(KILLSSTORAGE_BASE + taskId)) -- fake update quest tracker
 			end
 		end
